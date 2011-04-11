@@ -217,7 +217,7 @@ int FreeODBC(ODBC_TYPE *h){
                     //  Disconnect ONLY if you have no parents
                     //  If ghDLL is NULL (process has already detached) then
                     //  forget this (Win32 will purge the memory anyway).
-            if (ghDLL){
+            if (ghDLL && !h->hdbc->bShared){
                 if (h->hdbc->iConnected){
                     SQLDisconnect(h->hdbc->hdbc);
                     h->hdbc->hdbc = SQL_NULL_HDBC;
@@ -617,6 +617,7 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
     RETCODE retcode;           // Misc ODBC sh!t
     UCHAR   buff[ODBC_BUFF_SIZE];
     SDWORD  bufflenout;
+	DWORD		shared_hdbc = 0;
     int     lenn = 0;
     STRLEN  n_a;
 
@@ -626,18 +627,24 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
             //  (dsn) + (ConnetOption, Value) [ + (ConnectOption, Value)] ...
         CROAK("usage: ($Connection, $Err, $ErrText) = ODBC_Connect($DSN [, $ConnectOption , $Value] ...)\n");
     }
-    szIn = SvPV(ST(0), n_a); 
 
-    if(strcspn(szIn, "[]{}(),;?*=!@") < strlen(szIn)){
-        strncpy(szDSN, szIn, DSN_LENGTH - 1);
-        szDSN[DSN_LENGTH - 1] = '\0';
-    }else{
-            //  Let's assume that the DSN will not exceed DSN_LENGTH
-        strcpy(szDSN, "DSN=");  
-        strcat(szDSN, szIn); // Data Source string
-        strcat(szDSN, ";");
-    }
-
+		if(SvUV(ST(0))){	//if ST(0) is a valid IV then we will use it as an valid existing HDBC handle
+			shared_hdbc = SvUV(ST(0));
+			szDSN[0] = 0;
+			szIn = szDSN;
+		}
+		else{
+			szIn = SvPV(ST(0), n_a); 
+			if(strcspn(szIn, "[]{}(),;?*=!@") < strlen(szIn)){
+					strncpy(szDSN, szIn, DSN_LENGTH - 1);
+					szDSN[DSN_LENGTH - 1] = '\0';
+			}else{
+							//  Let's assume that the DSN will not exceed DSN_LENGTH
+					strcpy(szDSN, "DSN=");  
+					strcat(szDSN, szIn); // Data Source string
+					strcat(szDSN, ";");
+			}
+		}
     PUSHMARK(sp);
 
             //  Allocate new ODBC connection
@@ -646,15 +653,27 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
     }else{
         strcpy(h->szUserDSN, szIn);
         if (h->hdbc = new ODBC_HDBC){
-            h->hdbc->hdbc = SQL_NULL_HDBC;
-            h->hdbc->iConnected = 0;
-            h->hdbc->iCount = 1;    //  Set the count to include this particular instance
+					if(shared_hdbc){
+							h->hdbc->bShared = 1;
+							h->hdbc->hdbc = (void*)shared_hdbc;
+							h->hdbc->iConnected = 1;
+							if (h->szDSN = new char [1]){
+									h->szDSN[0]=0;
+							}
+							_NT_ODBC_Error(h, "ODBC_Connect", "5");
+							h->Error->ErrNum = 0;
+					}
+					else{
+						h->hdbc->bShared = 0;
+						h->hdbc->hdbc = SQL_NULL_HDBC;
+						h->hdbc->iConnected = 0;
+					}
+					h->hdbc->iCount = 1;    //  Set the count to include this particular instance
         }else{
             _NT_ODBC_Error(h, "ODBC_Connect could not allocate memory for an HDBC connection", "1a");
             DeleteConn(h->conn);
         }
-    
-        if (!h->Error->ErrNum){
+        if (!h->Error->ErrNum && !shared_hdbc){
             retcode = SQLAllocConnect(h->henv, &h->hdbc->hdbc);
             if (retcode != SQL_SUCCESS)
             {
@@ -687,7 +706,7 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
                 }
             }
         }
-        if (!h->Error->ErrNum){
+        if (!h->Error->ErrNum && !shared_hdbc){
             retcode = SQLDriverConnect(h->hdbc->hdbc, (HWND) NULL, (unsigned char *)szDSN, strlen(szDSN), buff, ODBC_BUFF_SIZE, (short *)&bufflenout, SQL_DRIVER_NOPROMPT);
             if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO){
                 _NT_ODBC_Error(h, "ODBC_Connect", "4");
@@ -748,7 +767,6 @@ XS(XS_WIN32__ODBC_Execute) // ODBC_Execute($connection, $sql_text) returns (0,@f
     if(items < 2){
         CROAK("usage: ($err,@fields) = ODBC_Execute($connection, $sql_text)\nprint \"Oops: $field[0]\" if ($err);\n");
     }
-
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     

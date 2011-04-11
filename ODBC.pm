@@ -1,6 +1,6 @@
 package Win32::ODBC;
 
-$VERSION = '0.034';
+$VERSION = '0.035';
 
 # Win32::ODBC.pm
 #       +==========================================================+
@@ -98,7 +98,7 @@ sub new
 {
     my ($n, $self);
     my ($type) = shift;
-    my ($DSN) = shift;
+    my ($DSN) = shift || $type;
     my (@Results) = @_;
 
     if (ref $DSN){
@@ -921,6 +921,11 @@ Administrator, I<or> it can be an honest-to-God I<DSN Connect String>.
 
 You should check to see if C<$Data> is indeed defined, otherwise there
 has been an error.
+
+Another way to create a data connection is by hdbc handle.
+
+		my $hdbc = $HostCpp->{HDBC};
+		$Data = new Win32::ODBC( $hdbc );
 
 You can now send SQL queries and retrieve info to your heart's
 content! See the description of the methods provided by this module

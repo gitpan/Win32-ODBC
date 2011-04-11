@@ -1,5 +1,9 @@
 Revision history for Perl extension Win32::ODBC.
 
+2011-04-04 xlat@cpan.org
+
+	* add a construction based on a HDBC handle.
+
 2008-06-13
 
 	* version 0.34

@@ -13,6 +13,7 @@ my %param = (
     VERSION_FROM  => 'ODBC.pm',
     OBJECT        => 'CMom$(OBJ_EXT) Constant$(OBJ_EXT) CResults$(OBJ_EXT) ODBC$(OBJ_EXT)',
     XS            => { 'ODBC.xs' => 'ODBC.cpp' },
+		#~ DEFINE 			=> '-D_DEBUG',
 );
 $param{INC} = '-GX'                     if $Config{'cc'} =~ /^cl/i;
 $param{INC} = '-I$Config{incpath}\\mfc' if $Config{'cc'} =~ /^bcc32/i;
