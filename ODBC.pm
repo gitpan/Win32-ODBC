@@ -98,7 +98,7 @@ sub new
 {
     my ($n, $self);
     my ($type) = shift;
-    my ($DSN) = shift || $type;
+    my ($DSN) = shift;
     my (@Results) = @_;
 
     if (ref $DSN){
@@ -356,8 +356,8 @@ sub GetConnections{
 #   of memory. The default max is 10k and the absolute max is 100k.
 #   This will probably never be used but I put it in because I noticed a fetch()
 #   of a MEMO field in an Access table was something like 4Gig. Maybe I did
-#   something wrong, but after checking several times I decided to impliment
-#   this limit thingie.
+#   something wrong, but after checking several times I decided to implement
+#   this limit thingy.
 ####
 sub SetMaxBufSize{
     my($self, $Size) = @_;
@@ -431,7 +431,7 @@ sub RowCount{
 }
 
 ####
-#   Returns the Statement Close Type -- how does ODBC Close a statment.
+#   Returns the Statement Close Type -- how does ODBC Close a statement.
 #       Types:
 #           SQL_DROP
 #           SQL_CLOSE
@@ -450,7 +450,7 @@ sub GetStmtCloseType{
 }
 
 ####
-#   Sets the Statement Close Type -- how does ODBC Close a statment.
+#   Sets the Statement Close Type -- how does ODBC Close a statement.
 #       Types:
 #           SQL_DROP
 #           SQL_CLOSE
@@ -922,11 +922,6 @@ Administrator, I<or> it can be an honest-to-God I<DSN Connect String>.
 You should check to see if C<$Data> is indeed defined, otherwise there
 has been an error.
 
-Another way to create a data connection is by hdbc handle.
-
-		my $hdbc = $HostCpp->{HDBC};
-		$Data = new Win32::ODBC( $hdbc );
-
 You can now send SQL queries and retrieve info to your heart's
 content! See the description of the methods provided by this module
 below and also the file F<TEST.PL> as referred to in L<INSTALLATION
@@ -968,7 +963,7 @@ can always recompile to increase the max limit.)
 
 =item *
 
-You can open a connection by either specifing a DSN or a connection
+You can open a connection by either specifying a DSN or a connection
 string!
 
 =item *
@@ -1269,7 +1264,7 @@ execution of a SQL function. This is helpful for debugging purposes.
 =item GetStmtCloseType ( [ CONNECTION ] )
 
 Returns a string indicating the type of closure that will be used
-everytime the I<hstmt> is freed. See C<SetStmtCloseType> for details.
+every time the I<hstmt> is freed. See C<SetStmtCloseType> for details.
 
 By default, the connection of the current object will be used. If
 C<CONNECTION> is a valid connection number, then it will be used.

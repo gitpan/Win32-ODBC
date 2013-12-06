@@ -47,7 +47,6 @@ struct	ODBC_hdbc{
 	HDBC	hdbc;				//	Handle to the ODBC connection
 	int	iConnected;			//	Is this HDBC actually connected to a database?
 	int	iCount;				//	How many ODBC objects are using this?
-	BOOL bShared;
 } typedef ODBC_HDBC;
 
 struct ODBCError{
